@@ -14,11 +14,13 @@ class QueryTest extends PHPUnit_Framework_TestCase {
     public function testSelectAsteriskAndColumns() {
         $res = $this->csv->select(array("Header A", "Header C"));
         $this->assertNotEquals($res, $this->expected);
-    }
 
-    public function testSelectAsteriskAndColumnsCaseInsensitive() {
-        $res = $this->csv->select(array("header a", "header c"));
-        $this->assertNotEquals($res, $this->expected);
+        $split = explode("\n", $res);
+
+        foreach($split as $line) {
+            $line_expl = explode(",", $line);
+            $this->assertCount(2, $line_expl);
+        }
     }
 
     /**
@@ -28,5 +30,15 @@ class QueryTest extends PHPUnit_Framework_TestCase {
     public function testThrowsExceptionIfWrongHeader() {
         $res = $this->csv->select(array("nope", "not that one"));
         $this->fail("Should have thrown an Exception for header that doesn't exist");
+    }
+
+    public function testFilter() {
+        $res = $this->csv->where(function($row) {
+            foreach($row as $col) {
+                return !preg_match("/\d+/", $col);
+            }
+        })->select("*");
+
+        $this->assertNotEquals($res, $this->expected);
     }
 }

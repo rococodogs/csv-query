@@ -6,6 +6,7 @@ class Query {
     private $is_file;
     private $filter = null;
     private $headers = array();
+    private $content = array();
     private $line = 1;
 
     public function __construct($source) {
@@ -24,50 +25,51 @@ class Query {
     }
 
     public function select($which = "*") {
-        $out_headers = array();
-
+        // if our 'which' was supplied as "field1,field2", make it array
         if ( is_string($which) && preg_match("/\,/", $which) ) {
-            $which = preg_split("/\,\s?/", $which);
-        } elseif ( $which != "*" ) {
+            $which = preg_split("/\,/", $which);
+        } 
+        
+        // or if we've only been provided a single field, put _that_ into an array
+        elseif ( $which != "*" ) {
             $which = (array) $which;
         }
 
         if ( is_array($which) ) {
-            foreach($which as $col) {
-                foreach($this->headers as $h) {
-                    $in_arr = false;
-                    if ( strtolower($col) == strtolower($h) ) {
-                        $in_arr = true;
-                        break;
-                    }
+            foreach($which as $u_col) {
+                if ( !in_array($u_col, $this->headers) ) { 
+                    throw new \Exception("Column '" . $u_col . "' not in file");
                 }
             }
-
-            if ( !$in_arr ) { throw new \Exception("Column '" . $col . "' not in file"); }
         }
 
         $res = array();
 
         while ( $row = fgetcsv($this->file) ) {
             $this->line++;
-            $row_res = array();
+
+            // results array for the row
+            $row_results = array();
+
+            // row as an associative array
+            $row_arr = $this->rowToAssociativeArray($row);
 
             if ( is_callable($this->filter) ) {
-                if ( !$this->filter($row) ) { 
+                if ( !call_user_func($this->filter, $row_arr) ) { 
                     continue; 
                 }
             }
 
-            if ( $which == "*" ) {
-                array_push($res, implode(",", $row));
-            } else {
-                foreach($which as $c) {
-                    $num = array_search($c, $this->headers);
-                    array_push($row_res, $row[$num]);
+            if ( is_array($which) ) {
+                foreach($which as $col) {
+                    array_push($row_results, $row_arr[$col]);
                 }
-
-                array_push($res, implode(",", $row_res));
+            } else {
+                $row_results = $row;
             }
+
+            array_push($res, implode(",", $row_results));
+            
         }
 
         array_unshift($res, implode(",", ($which == "*" ? $this->headers : $which)));
@@ -76,5 +78,17 @@ class Query {
 
     public function where($filter = null) {
         $this->filter = $filter;
+        return $this;
+    }
+
+    private function rowToAssociativeArray($row) {
+        $number_of_cols = count($this->headers);
+        $out = array();
+
+        for( $i = 0; $i < $number_of_cols; $i++ ) {
+            $out[$this->headers[$i]] = $row[$i];
+        }
+
+        return $out;
     }
 }
