@@ -4,15 +4,13 @@ namespace CSV;
 class Query {
 
     private $is_file;
+    private $file;
     private $filter = null;
     private $headers = array();
-    private $content = array();
-    private $line = 1;
+    private $outpath;
 
     public function __construct($source) {
-        if ( preg_match("/\,|\t\|/", $source) ) {
-            $this->is_file = false;
-        } elseif ( file_exists($source) ) {
+       if ( file_exists($source) ) {
             $this->is_file = true;
             $this->file = fopen($source, "r");
         } else {
@@ -21,59 +19,56 @@ class Query {
         }
 
         $this->headers = fgetcsv($this->file);
-        $this->line++;
     }
 
     public function select($which = "*") {
-        // if our 'which' was supplied as "field1,field2", make it array
-        if ( is_string($which) && preg_match("/\,/", $which) ) {
-            $which = preg_split("/\,/", $which);
-        } 
-        
-        // or if we've only been provided a single field, put _that_ into an array
-        elseif ( $which != "*" ) {
-            $which = (array) $which;
+        $from = $this->file;
+        $to = fopen($this->outpath, "w");
+        $headers = $this->headers;
+        $filter = $this->filter;
+
+        $getRows = array();
+
+        if ( !isset($to) ) { throw new \Exception("No output path provided"); }
+
+        // handle "which" input
+        if ( $which == "*" ) {
+            $getRows = array_keys($headers);
+            fputcsv($to, $headers);
+        } else {
+            $outCols = array();
+
+            for ($i = 0; $i < count($headers); $i++ ) {
+                if ( in_array($headers[$i], $which) ) {
+                    array_push($getRows, $i);
+                    array_push($outCols, $headers[$i]);
+                }
+            }
+
+            fputcsv($to, $outCols);
         }
 
-        if ( is_array($which) ) {
-            foreach($which as $u_col) {
-                if ( !in_array($u_col, $this->headers) ) { 
-                    throw new \Exception("Column '" . $u_col . "' not in file");
-                }
-            }
-        }
-
-        $res = array();
-
-        while ( $row = fgetcsv($this->file) ) {
-            $this->line++;
-
-            // results array for the row
-            $row_results = array();
-
-            // row as an associative array
-            $row_arr = $this->rowToAssociativeArray($row);
-
-            if ( is_callable($this->filter) ) {
-                if ( !call_user_func($this->filter, $row_arr) ) { 
-                    continue; 
-                }
-            }
-
-            if ( is_array($which) ) {
-                foreach($which as $col) {
-                    array_push($row_results, $row_arr[$col]);
-                }
-            } else {
-                $row_results = $row;
-            }
-
-            array_push($res, implode(",", $row_results));
+        while( $row = fgetcsv($from) ) {
+            $rowOut = array();
             
-        }
+            if ( is_callable($filter) ) {
+                $row_arr = array_combine($headers, $row);
+                if ( !call_user_func($filter, $row_arr) ) {
+                    continue;
+                }
+            }
 
-        array_unshift($res, implode(",", ($which == "*" ? $this->headers : $which)));
-        return implode("\n", $res);
+            foreach( $getRows as $colNum ) {
+                array_push($rowOut, $row[$colNum]);
+            }
+
+            fputcsv($to, $rowOut);
+        }
+    }
+
+    public function to($location) {
+        $this->outpath = $location;
+        return $this;
     }
 
     public function where($filter = null) {

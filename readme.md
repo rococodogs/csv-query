@@ -13,9 +13,10 @@ we'll focus on #2
 ## psuedo code
 
 ```
-$csv = new CSV\CSV("file.csv");
+$csv = new CSV\Query("file.csv");
 $res = $csv
-        ->where(function($row) { return $row['last-check-out'] < strtotime('today'); })
+        ->to("out.csv")
+        ->where(function($row) { return strtotime($row['last-check-out']) < strtotime('today'); })
         ->select("*")
         ;
 ```
