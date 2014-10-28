@@ -43,7 +43,7 @@ class Query {
 
     public function execute() {
         $from = $this->file;
-        $to = fopen($this->outpath, "w");
+        $to = isset($this->outpath) ? fopen($this->outpath, "w") : null;
         $headers = $this->headers;
         $filter = $this->filter;
         $select = isset($this->select) ? $this->select : "*";
