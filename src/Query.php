@@ -8,6 +8,7 @@ class Query {
     private $filter = null;
     private $headers = array();
     private $outpath;
+    private $select;
 
     public function __construct($source) {
        if ( file_exists($source) ) {
@@ -15,31 +16,38 @@ class Query {
             $this->file = fopen($source, "r");
         } else {
             // handle bad source
-            throw new \Exception("Source needs to be a string or a file");
+            throw new \Exception("Source currently needs to be a file");
         }
 
         $this->headers = fgetcsv($this->file);
     }
 
-    public function select($which = "*") {
+    /**
+     *  executes the parsing of input csv + writing of output csv
+     *
+     *
+     */
+
+    public function execute() {
         $from = $this->file;
         $to = fopen($this->outpath, "w");
         $headers = $this->headers;
         $filter = $this->filter;
+        $select = isset($this->select) ? $this->select : "*";
 
         $getRows = array();
 
         if ( !isset($to) ) { throw new \Exception("No output path provided"); }
 
         // handle "which" input
-        if ( $which == "*" ) {
+        if ( $select == "*" ) {
             $getRows = array_keys($headers);
             fputcsv($to, $headers);
         } else {
             $outCols = array();
 
             for ($i = 0; $i < count($headers); $i++ ) {
-                if ( in_array($headers[$i], $which) ) {
+                if ( in_array($headers[$i], $select) ) {
                     array_push($getRows, $i);
                     array_push($outCols, $headers[$i]);
                 }
@@ -66,24 +74,56 @@ class Query {
         }
     }
 
-    public function to($location) {
+    /**
+     *  alias for CSV\Query::where()
+     *
+     *  @param  callable   filter callable, takes single param of 
+     *                     associative array row w/ headers as keys + row's values
+     *  @return CSV\Query  this instance
+     */
+
+    public function filter($filter = null) {
+        return $this->where($filter);
+    }
+
+    /**
+     *  select rows to return
+     *
+     *  @param  string|array  "*", comma-delimited list, or array
+     *  @return CSV\Query     this instance
+     */
+
+    public function select($which = "*") {
+        $this->select = $which;
+        return $this;
+    }
+
+    /**
+     *  adds output location (defaults to stdout)
+     *
+     *  @param  string    file location
+     *  @return CSV\Query this instance
+     */
+
+    public function to($location = "php://output") {
         $this->outpath = $location;
         return $this;
     }
 
+    /**
+     *  applies filter to query
+     *
+     *  @param  callable   filter callable, takes single param of 
+     *                     associative array row w/ headers as keys + row's values
+     *  @return CSV\Query  this instance
+     */
+
     public function where($filter = null) {
-        $this->filter = $filter;
-        return $this;
-    }
-
-    private function rowToAssociativeArray($row) {
-        $number_of_cols = count($this->headers);
-        $out = array();
-
-        for( $i = 0; $i < $number_of_cols; $i++ ) {
-            $out[$this->headers[$i]] = $row[$i];
+        if ( !is_callable($filter) ) {
+            $filter = null;
         }
 
-        return $out;
+        $this->filter = $filter;
+        return $this;
     }
 }

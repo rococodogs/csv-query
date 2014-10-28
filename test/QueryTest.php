@@ -10,6 +10,7 @@ class QueryTest extends PHPUnit_Framework_TestCase {
         $this->csv
              ->to("test/test-duplicate.csv")
              ->select("*")
+             ->execute()
              ;
 
         $this->assertEquals($this->expected, file_get_contents("test/test-duplicate.csv"));
@@ -20,6 +21,7 @@ class QueryTest extends PHPUnit_Framework_TestCase {
              ->to("test/test-duplicate.csv")
              ->where(function($row) { return $row['COUNTRY'] == "USA"; })
              ->select("*")
+             ->execute()
              ;
 
         $this->assertEquals($this->expected, file_get_contents("test/test-duplicate.csv"));
@@ -28,6 +30,7 @@ class QueryTest extends PHPUnit_Framework_TestCase {
              ->to("test/test-duplicate.csv")
              ->where(function($row) { return $row['COUNTRY'] == "Canada"; })
              ->select("*")
+             ->execute()
              ;
         $this->assertNotEquals($this->expected, file_get_contents("test/test-duplicate.csv"));
 
@@ -50,6 +53,7 @@ class QueryTest extends PHPUnit_Framework_TestCase {
         $this->csv
              ->to("test/test-duplicate.csv")
              ->select(array("LOGINID", "DISPLAYNAME"))
+             ->execute()
              ;
 
         $file = fopen("test/test-duplicate.csv", "r");
