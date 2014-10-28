@@ -7,10 +7,11 @@ class Query {
     private $filter = null;
     private $headers = array();
     private $outpath = "";
-    private $select;
+    private $select = "*";
+    
     private $limit = 0;
-
     private $count = 0;
+    private $line_count = 0;
 
     /**
      *  constructor; calls CSV\Query::from() loader method
@@ -30,9 +31,9 @@ class Query {
     public function getFilter() { return $this->filter; }
     public function getHeaders() { return $this->select == "*" ? $this->headers : $this->select; }
     public function getLimit() { return $this->limit; }
-    public function getRawHeaders() { return $this->headers; }
+    public function getLineCount() { return $this->line_count; }
     public function getOutputPath() { return $this->outpath; }
-
+    public function getRawHeaders() { return $this->headers; }
 
     /**
      *  executes the parsing of input csv + writing of output csv
@@ -69,6 +70,8 @@ class Query {
         }
 
         while( $row = fgetcsv($from) ) {
+            $this->line_count++;
+
             $rowOut = array();
 
             if ( is_callable($filter) ) {
