@@ -6,7 +6,7 @@ class Query {
     private $file;
     private $filter = null;
     private $headers = array();
-    private $outpath;
+    private $outpath = "";
     private $select;
     private $limit = 0;
 
@@ -24,9 +24,21 @@ class Query {
     }
 
     /**
+     *  getter methods - handy for post-conversion checking
+     */
+
+    public function getCount($includeHeaders = false) { return $this->count + (int) $includeHeaders; }
+    public function getFilter() { return $this->filter; }
+    public function getHeaders() { return $this->select == "*" ? $this->headers : $this->select; }
+    public function getLimit() { return $this->limit; }
+    public function getRawHeaders() { return $this->headers; }
+    public function getOutputPath() { return $this->outpath; }
+
+
+    /**
      *  executes the parsing of input csv + writing of output csv
      *
-     *
+     *  
      */
 
     public function execute() {
@@ -59,7 +71,7 @@ class Query {
 
         while( $row = fgetcsv($from) ) {
             $rowOut = array();
-            
+
             if ( is_callable($filter) ) {
                 $row_arr = array_combine($headers, $row);
                 if ( !call_user_func($filter, $row_arr) ) {
