@@ -12,15 +12,14 @@ class Query {
 
     private $count = 0;
 
-    public function __construct($source) {
-       if ( file_exists($source) ) {
-            $this->file = fopen($source, "r");
-        } else {
-            // handle bad source
-            throw new \Exception("Source currently needs to be a file");
-        }
+    /**
+     *  constructor; calls CSV\Query::from() loader method
+     *
+     */
 
-        $this->headers = fgetcsv($this->file);
+    public function __construct($source = null) {
+        if ( $source ) { $this->from($source); }
+        return $this;
     }
 
     /**
@@ -100,6 +99,24 @@ class Query {
 
     public function filter($filter = null) {
         return $this->where($filter);
+    }
+
+    /**
+     *  loads a file + header array
+     *
+     *  @param  string                      filepath
+     *  @return CSV\Query                   this instance
+     *  @throws \InvalidArgumentException
+     */
+
+    public function from($path) {
+       if ( file_exists($path) ) {
+            $this->file = fopen($path, "r");
+            $this->headers = fgetcsv($this->file);
+        } else {
+            // handle bad source
+            throw new \InvalidArgumentException("Source needs to be a file");
+        }
     }
 
     /**

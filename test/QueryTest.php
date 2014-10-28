@@ -13,7 +13,9 @@ class QueryTest extends PHPUnit_Framework_TestCase {
     }
 
     public function tearDown() {
-        unlink(self::OUTPUT_FILENAME);
+        if ( file_exists(self::OUTPUT_FILENAME) ) {
+            unlink(self::OUTPUT_FILENAME);
+        }
     }
 
     public function testOneForOne() {
@@ -57,6 +59,15 @@ class QueryTest extends PHPUnit_Framework_TestCase {
 
         $this->assertEquals(self::TEST_CSV_ROW_COUNT, $test_count);
         $this->assertEquals(0, $dup_count);
+    }
+
+    /**
+     *  @expectedException \InvalidArgumentException
+     */
+
+    public function testFromThrowsException() {
+        $csv = new CSV\Query("not a valid argument");
+        $this->fail("A not-valid filepath should throw a vanilla InvalidArgumentException");
     }
 
     public function testLimit() {
