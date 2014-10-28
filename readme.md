@@ -45,3 +45,26 @@ sets the export path, defaults to `php://output`
 
 ### `CSV\Query::where(callable $callback)`
 apply a filter function to each row. provides the callable with an associative array whose keys are the CSV's headings.
+
+## after a query's execution, there are a few methods to call that provide some info about the query
+
+### `CSV\Query::getCount([boolean $includeHeaders = false])`
+returns item count. use `$csv->getCount(true)` to include header row
+
+### `CSV\Query::getFilter()`
+returns filter callable
+
+### `CSV\Query::getHeaders()`
+returns array of output headers
+
+### `CSV\Query::getLimit()`
+returns the item limit
+
+### `CSV\Query::getLineCount()`
+returns the input csv file's line count. **note:** if `CSV\Query::limit()` is used, this number will be the total number of rows read _until_ the limit was reached
+
+### `CSV\Query::getOutputPath()`
+returns the path to the output file
+
+### `CSV\Query::getRawHeaders()`
+returns array of input headers
