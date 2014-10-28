@@ -3,16 +3,17 @@ namespace CSV;
 
 class Query {
 
-    private $is_file;
     private $file;
     private $filter = null;
     private $headers = array();
     private $outpath;
     private $select;
+    private $limit = 0;
+
+    private $count = 0;
 
     public function __construct($source) {
        if ( file_exists($source) ) {
-            $this->is_file = true;
             $this->file = fopen($source, "r");
         } else {
             // handle bad source
@@ -39,7 +40,7 @@ class Query {
 
         if ( !isset($to) ) { throw new \Exception("No output path provided"); }
 
-        // handle "which" input
+        // handle select input
         if ( $select == "*" ) {
             $getRows = array_keys($headers);
             fputcsv($to, $headers);
@@ -71,6 +72,9 @@ class Query {
             }
 
             fputcsv($to, $rowOut);
+
+            $this->count++;
+            if ( $this->limit && $this->count == $this->limit ) { break; }
         }
     }
 
@@ -84,6 +88,18 @@ class Query {
 
     public function filter($filter = null) {
         return $this->where($filter);
+    }
+
+    /**
+     *  set a limit for number of lines returned
+     *
+     *  @param int
+     *  @return CSV\Query  this instance
+     */
+
+    public function limit($limit = 0) {
+        $this->limit = $limit;
+        return $this;
     }
 
     /**
