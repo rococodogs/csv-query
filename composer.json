@@ -1,5 +1,6 @@
 {
     "name": "malantonio/CSV",
+    "version": "0.1.0",
     "require": {
         "php": ">=5.3"
     },
