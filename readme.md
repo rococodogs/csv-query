@@ -33,7 +33,10 @@ and before you can say "snack time anytime" you'll have a new csv file waiting f
 executes the query
 
 ### `CSV\Query::filter(callable $callback)`
-filters each row via provided callback, which is provided an associative array representing the row (keys are headers). note that keys _must_ match header case. (also available as `CSV\Query::where()`)
+filters each row via provided callback, which is provided an associative array representing the row (keys are headers). (also available as `CSV\Query::where()`)
+
+#### Note:
+* keys must match header case.
 
 ### `CSV\Query::limit(int $limit)`
 limit the number of items returned
@@ -42,9 +45,11 @@ limit the number of items returned
 choose which columns to return. `*` will return all columns.
 
 ### `CSV\Query::transform(callable $callback)`
-applies transformation to each row via provided callback, which is provided an associative array representing the row (keys are headers). again, note that keys _must_ match header case.
+applies transformation to each row via provided callback, which is provided an associative array representing the row (keys are headers). 
 
-**NOTE** case-sensitive
+#### Note:
+* keys must match header case.
+* callback argument must be a [pass-by-value argument](http://us1.php.net/manual/en/language.references.pass.php)
 
 ### `CSV\Query::to(string $output_location)`
 sets the export path, defaults to `php://output`
