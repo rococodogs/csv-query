@@ -32,11 +32,17 @@ and before you can say "snack time anytime" you'll have a new csv file waiting f
 ### `CSV\Query::execute()`
 executes the query
 
+### `CSV\Query::filter(callable $callback)`
+filters each row via provided callback, which is provided an associative array representing the row (keys are headers). note that keys _must_ match header case. (also available as `CSV\Query::where()`)
+
 ### `CSV\Query::limit(int $limit)`
 limit the number of items returned
 
 ### `CSV\Query::select(string|array $select)`
 choose which columns to return. `*` will return all columns.
+
+### `CSV\Query::transform(callable $callback)`
+applies transformation to each row via provided callback, which is provided an associative array representing the row (keys are headers). again, note that keys _must_ match header case.
 
 **NOTE** case-sensitive
 

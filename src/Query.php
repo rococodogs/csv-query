@@ -5,8 +5,9 @@ class Query {
 
     private $file;
     private $filter = null;
+    private $transform = null;
     private $headers = array();
-    private $outpath = "";
+    private $outpath = "php://output";
     private $select = "*";
     
     private $limit = 0;
@@ -34,6 +35,7 @@ class Query {
     public function getLineCount() { return $this->line_count; }
     public function getOutputPath() { return $this->outpath; }
     public function getRawHeaders() { return $this->headers; }
+    public function getTransform() { return $this->transform; }
 
     /**
      *  executes the parsing of input csv + writing of output csv
@@ -46,6 +48,7 @@ class Query {
         $to = isset($this->outpath) ? fopen($this->outpath, "w") : null;
         $headers = $this->headers;
         $filter = $this->filter;
+        $transform = $this->transform;
         $select = isset($this->select) ? $this->select : "*";
 
         $getRows = array();
@@ -76,9 +79,15 @@ class Query {
 
             if ( is_callable($filter) ) {
                 $row_arr = array_combine($headers, $row);
-                if ( !call_user_func($filter, $row_arr) ) {
+                if ( !$filter($row_arr) ) {
                     continue;
                 }
+            }
+
+            if ( is_callable($transform) ) {
+                $row_arr = array_combine($headers, $row);
+                $transform($row_arr);
+                $row = array_values($row_arr);
             }
 
             foreach( $getRows as $colNum ) {
@@ -155,6 +164,11 @@ class Query {
 
     public function to($location = "php://output") {
         $this->outpath = $location;
+        return $this;
+    }
+
+    public function transform($callable = null) {
+        $this->transform = $callable;
         return $this;
     }
 

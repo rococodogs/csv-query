@@ -10,6 +10,7 @@ class QueryTest extends PHPUnit_Framework_TestCase {
     public function setUp() {
         $this->expected = file_get_contents(self::INPUT_FILENAME);
         $this->csv = new CSV\Query(self::INPUT_FILENAME);
+        $this->csv->to(self::OUTPUT_FILENAME);
     }
 
     public function tearDown() {
@@ -20,7 +21,7 @@ class QueryTest extends PHPUnit_Framework_TestCase {
 
     public function testOneForOne() {
         $this->csv
-             ->to(self::OUTPUT_FILENAME)
+
              ->select("*")
              ->execute()
              ;
@@ -30,7 +31,6 @@ class QueryTest extends PHPUnit_Framework_TestCase {
 
     public function testFilter() {
         $this->csv
-             ->to(self::OUTPUT_FILENAME)
              ->where(function($row) { return $row['COUNTRY'] == "USA"; })
              ->select("*")
              ->execute()
@@ -39,7 +39,6 @@ class QueryTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals($this->expected, file_get_contents(self::OUTPUT_FILENAME));
 
         $this->csv
-             ->to(self::OUTPUT_FILENAME)
              ->where(function($row) { return $row['COUNTRY'] == "Canada"; })
              ->select("*")
              ->execute()
@@ -72,7 +71,6 @@ class QueryTest extends PHPUnit_Framework_TestCase {
 
     public function testLimit() {
         $this->csv
-             ->to(self::OUTPUT_FILENAME)
              ->select("*")
              ->limit(1)
              ->execute()
@@ -90,7 +88,6 @@ class QueryTest extends PHPUnit_Framework_TestCase {
         $rowCount = count($rows);
 
         $this->csv
-             ->to(self::OUTPUT_FILENAME)
              ->select($rows)
              ->execute()
              ;
@@ -101,5 +98,23 @@ class QueryTest extends PHPUnit_Framework_TestCase {
         }
 
         fclose($file);
+    }
+
+    public function testTransform() {        
+        $rows = array("LOGINID", "DISPLAYNAME");
+        $this->csv
+             ->transform(function(&$row) {
+                $row['LOGINID'] = "test-" . $row['LOGINID'];
+             })
+             ->execute()
+             ;
+
+        $file = fopen(self::OUTPUT_FILENAME, "r");
+
+        // advance header-row :P
+        fgetcsv($file);
+        while($row = fgetcsv($file)) {
+            $this->assertTrue((bool) preg_match("/^test\-/", $row[0]));
+        }
     }
 }
